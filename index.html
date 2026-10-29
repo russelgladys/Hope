@@ -942,11 +942,11 @@
     </div>
     <span style="font-weight:700; color:#1e293b;">QUANT PRO 9大商品純K線高刷新率戰情終端</span>
     <span class="bm-sep">|</span>
-    <span>數據拓樸: Port 5001 ~ 5010</span>
+    <span id="envModeBanner" style="font-weight:800; padding:2px 8px; border-radius:4px; background:#eff6ff; color:#2563eb;">檢測連線環境中...</span>
     <span class="bm-sep">|</span>
     <span class="bm-link" id="topNoticeSopLink" style="font-weight:800; color:#d97706; text-decoration:underline;" title="點擊展開 10 秒維修拓樸面板">⚡ [10秒終極維修 SOP]</span>
     <span class="bm-sep">|</span>
-    <span style="color:#059669; font-weight:600;">操作指南：滑鼠上下 放大縮小 ｜ 滑鼠左右 左右橫移 (支援滾輪/拖曳/Shift+滾輪)</span>
+    <span style="color:#059669; font-weight:600;">操作指南：滑鼠上下 放大縮小 ｜ 滑鼠左右 左右橫移</span>
   </div>
 
   <!-- 2. Main Top Navigation Bar -->
@@ -1367,23 +1367,22 @@
 
     function generateSimulatedCandles(basePrice, count = 180) {
       const now = Math.floor(Date.now() / 1000);
-      const bars = [];
-      let p = basePrice * 0.985;
-      const step = Math.max(0.001, basePrice * 0.0012);
-      for (let i = 0; i < count; i++) {
+      const bars = new Array(count);
+      let p = basePrice;
+      const step = Math.max(0.001, basePrice * 0.0006);
+      for (let i = count - 1; i >= 0; i--) {
         const t = now - (count - 1 - i) * 60;
-        const drift = (Math.random() - 0.492) * step;
-        const o = p;
-        const c = p + drift;
-        const h = Math.max(o, c) + Math.random() * step * 0.5;
-        const l = Math.min(o, c) - Math.random() * step * 0.5;
+        const c = p;
+        const drift = (Math.random() - 0.495) * step;
+        const o = c - drift;
+        const h = Math.max(o, c) + Math.random() * step * 0.4;
+        const l = Math.min(o, c) - Math.random() * step * 0.4;
         const v = Math.floor(10 + Math.random() * 50);
         const d = new Date(t * 1000);
         const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        bars.push({ date: dateStr, time: t, open: o, high: h, low: l, close: c, volume: v });
-        p = c;
+        bars[i] = { date: dateStr, time: t, open: o, high: h, low: l, close: c, volume: v };
+        p = o;
       }
-      if (bars.length > 0) bars[bars.length - 1].close = basePrice;
       return bars;
     }
 
@@ -1396,12 +1395,29 @@
       if (urlTf) currentTimeframe = urlTf.toLowerCase();
 
       try {
-        const res = await fetch('/api/watchlist');
+        let res = await fetch('/api/watchlist');
+        if (!res.ok) {
+          res = await fetch('./data/watchlist.json');
+        }
         if (!res.ok) throw new Error('API 404');
         watchlistData = await res.json();
       } catch (err) {
         // Fallback for GitHub Pages static hosting
         watchlistData = JSON.parse(JSON.stringify(FALLBACK_WATCHLIST));
+      }
+
+      const isGitHub = window.location.hostname.includes('github.io');
+      const envBanner = document.getElementById('envModeBanner');
+      if (envBanner) {
+        if (isGitHub) {
+          envBanner.style.background = '#fef3c7';
+          envBanner.style.color = '#b45309';
+          envBanner.innerHTML = `☁️ GitHub 雲端快照模式 ｜ 本機即時毫秒連線請開 👉 <a href="http://127.0.0.1:8000/" target="_blank" style="color:#d97706; text-decoration:underline; font-weight:800;">http://127.0.0.1:8000/</a>`;
+        } else {
+          envBanner.style.background = '#dcfce7';
+          envBanner.style.color = '#15803d';
+          envBanner.innerHTML = `🟢 本機微服務即時串流 (Port 5001~5010 毫秒同步)`;
+        }
       }
 
       renderHeaderTopologyStrip();
@@ -1476,7 +1492,11 @@
       });
 
       try {
-        const res = await fetch(`/api/kline?symbol=${sym}&timeframe=${tf}`);
+        let res = await fetch(`/api/kline?symbol=${sym}&timeframe=${tf}`);
+        if (!res.ok) {
+          // Fallback to static exported snapshot for GitHub Pages
+          res = await fetch(`./data/${sym}.json`);
+        }
         if (!res.ok) throw new Error('API 404');
         const data = await res.json();
         currentSummary = data.summary;
