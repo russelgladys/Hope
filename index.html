@@ -1396,9 +1396,8 @@
 
       try {
         let res = await fetch('/api/watchlist');
-        if (!res.ok) {
-          res = await fetch('./data/watchlist.json');
-        }
+        if (!res.ok) res = await fetch('./watchlist.json');
+        if (!res.ok) res = await fetch('./data/watchlist.json');
         if (!res.ok) throw new Error('API 404');
         watchlistData = await res.json();
       } catch (err) {
@@ -1493,10 +1492,8 @@
 
       try {
         let res = await fetch(`/api/kline?symbol=${sym}&timeframe=${tf}`);
-        if (!res.ok) {
-          // Fallback to static exported snapshot for GitHub Pages
-          res = await fetch(`./data/${sym}.json`);
-        }
+        if (!res.ok) res = await fetch(`./${sym}.json`);
+        if (!res.ok) res = await fetch(`./data/${sym}.json`);
         if (!res.ok) throw new Error('API 404');
         const data = await res.json();
         currentSummary = data.summary;
