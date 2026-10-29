@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUANT PRO 9大商品超高速純K線戰情終端 (Port 5001-5010)</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-hover: #f0f3fa;
+      --border-color: #e0e3eb;
+      --text-primary: #131722;
+      --text-secondary: #787b86;
+      --color-green: #089981;
+      --color-red: #f23645;
+      --color-blue: #2563eb;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, "Segoe UI", sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-stack);
+      background: #ffffff;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+    }
+
+    /* 1. Top Browser Notice Bar (Bookmark Bar) */
+    .browser-notice-bar {
+      height: 22px;
+      background: #f7f9fa;
+      border-bottom: 1px solid #e5e8ed;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 11px;
+      color: #555860;
+      gap: 7px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .bm-icon {
+      display: flex;
+      align-items: center;
+      color: #6a6e78;
+    }
+    .bm-sep {
+      color: #c9ccd6;
+    }
+    .bm-link {
+      color: #1e53e5;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* 2. Main Top Navigation Bar */
+    .top-nav {
+      height: 40px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 5px;
+      flex-shrink: 0;
+      background: #ffffff;
+      white-space: nowrap;
+    }
+    .nav-btn {
+      height: 30px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      transition: background 0.12s;
+    }
+    .nav-btn:hover {
+      background: var(--bg-hover);
+    }
+    .nav-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+    }
+
+    .ticker-search-btn {
+      font-weight: 800;
+      font-size: 14px;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #f4f6fc;
+      border: 1px solid #d0d7de;
+      border-radius: 5px;
+      height: 30px;
+      cursor: pointer;
+    }
+
+    .v-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border-color);
+      margin: 0 2px;
+    }
+
+    /* Timeframe Selector Pill Bar (Exact match to uploaded image) */
+    .timeframe-pill-container {
+      display: inline-flex;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 2px 4px;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .tf-header-label {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      padding: 0 2px 0 4px;
+    }
+    .tf-select-box {
+      height: 24px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #f6f8fa;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #24292f;
+      padding: 0 4px;
+      cursor: pointer;
+      outline: none;
+    }
+    .tf-btn-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .tf-btn {
+      height: 24px;
+      padding: 0 7px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      transition: background 0.1s, transform 0.08s;
+    }
+    .tf-btn:hover {
+      background: #1d4ed8;
+    }
+    .tf-btn.active {
+      background: #1e40af;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .tf-badge-orange {
+      background: #ea580c;
+      border: 1px solid #c2410c;
+      border-radius: 3px;
+      color: #ffffff;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 0 3px;
+      margin-right: 4px;
+      line-height: 12px;
+    }
+
+    .live-indicator-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #059669;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .live-pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+
+    .nav-right-group {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Header Topology Strip */
+    .header-topology-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 0 4px;
+      overflow-x: auto;
+    }
+    .topo-header-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #ea580c;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-right: 2px;
+      white-space: nowrap;
+    }
+    .topo-pill {
+      height: 25px;
+      padding: 0 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .topo-pill:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .topo-pill.active {
+      background: #1e40af;
+      border-color: #1e3a8a;
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(30, 64, 175, 0.3);
+    }
+    .topo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    .topo-dot.err {
+      background: #ef4444;
+      box-shadow: 0 0 5px #ef4444;
+    }
+
+    /* 10s SOP Button */
+    .topo-sop-btn {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border: 1px solid #b45309;
+      box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
+      transition: all 0.15s;
+    }
+    .topo-sop-btn:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      transform: translateY(-1px);
+    }
+
+    /* Modal Backdrop and Card */
+    .topo-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .topo-modal-card {
+      width: 900px;
+      max-width: 95vw;
+      max-height: 90vh;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      border: 1px solid #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 12.5px;
+      color: #1e293b;
+    }
+    .topo-modal-header {
+      padding: 12px 16px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topo-modal-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .topo-modal-close {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 700;
+    }
+    .topo-modal-close:hover {
+      color: #ffffff;
+    }
+    .topo-modal-body {
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .sop-alert-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 12px 14px;
+    }
+    .sop-alert-title {
+      font-weight: 800;
+      color: #b45309;
+      font-size: 13px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sop-cmd-row {
+      display: flex;
+      align-items: center;
+      background: #1e293b;
+      color: #38bdf8;
+      font-family: Consolas, monospace;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-top: 5px;
+      font-size: 11.5px;
+      justify-content: space-between;
+    }
+    .sop-cmd-row code {
+      word-break: break-all;
+    }
+    .copy-btn {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: 10px;
+    }
+    .copy-btn:hover {
+      background: #1d4ed8;
+    }
+    .topo-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+    .topo-table th {
+      background: #f1f5f9;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 800;
+      color: #334155;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .topo-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+    }
+    .topo-table tr:hover {
+      background: #f8fafc;
+    }
+
+    /* 3. Main Workspace Area */
+    .workspace {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 62px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Drawing Bar */
+    .left-bar {
+      width: 44px;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 0;
+      gap: 4px;
+      flex-shrink: 0;
+      background: #ffffff;
+    }
+    .tool-item {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #434651;
+      transition: background 0.12s;
+    }
+    .tool-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .tool-item svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    /* Center Chart Box */
+    .chart-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    /* Overlay Chart Elements */
+    .chart-overlay-panel {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .legend-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .symbol-icon-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0077c5;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .sym-header-text {
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .market-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      color: #9333ea;
+      margin-left: 2px;
+    }
+    .market-badge svg {
+      width: 11px;
+      height: 11px;
+      fill: currentColor;
+    }
+    .ohlc-numbers {
+      font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif;
+      font-size: 12px;
+      color: var(--color-green);
+      font-weight: 600;
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Bid/Ask Box */
+    .bid-ask-container {
+      display: flex;
+      align-items: center;
+      pointer-events: auto;
+      margin-top: 2px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: #ffffff;
+      overflow: hidden;
+      width: fit-content;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .bid-btn, .ask-btn {
+      padding: 3px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      min-width: 62px;
+    }
+    .bid-btn:hover { background: #fef2f2; }
+    .ask-btn:hover { background: #eff6ff; }
+    .bid-btn .num { font-size: 11.5px; font-weight: 700; color: var(--color-red); }
+    .bid-btn .lbl { font-size: 9px; color: var(--color-red); }
+    .ask-btn .num { font-size: 11.5px; font-weight: 700; color: var(--color-blue); }
+    .ask-btn .lbl { font-size: 9px; color: var(--color-blue); }
+    .spread-tag {
+      padding: 0 5px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      background: #f8fafc;
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      line-height: 28px;
+    }
+
+    .volume-indicator-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+    .vol-toggle-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 13px;
+      height: 13px;
+      border: 1px solid #d0d7de;
+      border-radius: 2px;
+      cursor: pointer;
+      pointer-events: auto;
+      background: #f6f8fa;
+    }
+
+    /* Canvas Container */
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+    #tvCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Floating Zoom Controls */
+    .chart-floating-controls {
+      position: absolute;
+      right: 88px;
+      bottom: 34px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(4px);
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 3px 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      z-index: 15;
+    }
+    .chart-ctrl-btn {
+      height: 23px;
+      padding: 0 7px;
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #24292f;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+    }
+    .chart-ctrl-btn:hover {
+      background: #0969da;
+      color: #ffffff;
+      border-color: #0969da;
+    }
+
+    /* Bottom Range Selector */
+    .bottom-bar {
+      height: 28px;
+      border-top: 1px solid var(--border-color);
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 7px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .bottom-right-meta {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+    .adj-badge {
+      font-weight: 600;
+      cursor: pointer;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .adj-badge:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* 4. Right Watchlist Pane */
+    .watchlist-sidebar {
+      width: 256px;
+      background: #ffffff;
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .wl-head-bar {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .wl-title-txt {
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .wl-btn-group {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .wl-btn {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #787b86;
+    }
+    .wl-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .wl-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Table Column Header */
+    .wl-cols-header {
+      display: grid;
+      grid-template-columns: 72px 1fr 50px 44px;
+      padding: 4px 6px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid #f0f3fa;
+      flex-shrink: 0;
+    }
+    .wl-cols-header > div:not(:first-child) {
+      text-align: right;
+    }
+
+    /* List Container */
+    .wl-table-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .wl-table-body::-webkit-scrollbar {
+      width: 3px;
+    }
+    .wl-table-body::-webkit-scrollbar-thumb {
+      background: #d8dbe4;
+    }
+
+    .wl-row-item {
+      display: grid;
+      grid-template-columns: 72px 1fr 50px 44px;
+      padding: 3.5px 6px;
+      align-items: center;
+      font-size: 10.5px;
+      cursor: pointer;
+      border-bottom: 1px solid #fafbfe;
+      transition: background 0.08s;
+      height: 23px;
+    }
+    .wl-row-item:hover {
+      background: #f7f9fd;
+    }
+    .wl-row-item.active-item {
+      background: #ffffff;
+      outline: 2px solid #131722;
+      outline-offset: -2px;
+      position: relative;
+      z-index: 2;
+    }
+    .wl-sym-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .sym-logo-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #0077c5;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7.5px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .sym-lbl {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .port-tag {
+      font-size: 8px;
+      color: #94a3b8;
+    }
+    .price-num {
+      text-align: right;
+      font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding-right: 2px;
+      transition: background 0.25s, color 0.25s;
+    }
+    .chg-num, .pct-num {
+      text-align: right;
+      font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif;
+      font-weight: 600;
+    }
+    .text-green { color: var(--color-green); }
+    .text-red { color: var(--color-red); }
+
+    /* Flash highlight animations */
+    .price-flash-green {
+      background-color: rgba(8, 153, 129, 0.25) !important;
+      color: #089981 !important;
+    }
+    .price-flash-red {
+      background-color: rgba(242, 54, 69, 0.25) !important;
+      color: #f23645 !important;
+    }
+
+    /* Detail Card of Active Selected Symbol */
+    .detail-bottom-section {
+      height: 165px;
+      border-top: 1px solid var(--border-color);
+      background: #ffffff;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .detail-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .company-brand-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-circle-black {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0077c5;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .brand-name-bold {
+      font-size: 13.5px;
+      font-weight: 800;
+    }
+    .company-title-link {
+      font-size: 11px;
+      color: #555860;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .price-giant-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .price-giant {
+      font-size: 19px;
+      font-weight: 800;
+      font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif;
+    }
+    .currency-tag {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+    .main-diff-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .market-status-line {
+      font-size: 10.5px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+    .market-green-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    /* 5. Right Toolbar (Icons) */
+    .right-bar {
+      width: 44px;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 0;
+      gap: 4px;
+      flex-shrink: 0;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Top Browser Notice Bar -->
+  <div class="browser-notice-bar">
+    <div class="bm-icon">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2z"/></svg>
+    </div>
+    <span style="font-weight:700; color:#1e293b;">QUANT PRO 9大商品純K線高刷新率戰情終端</span>
+    <span class="bm-sep">|</span>
+    <span>數據拓樸: Port 5001 ~ 5010</span>
+    <span class="bm-sep">|</span>
+    <span class="bm-link" id="topNoticeSopLink" style="font-weight:800; color:#d97706; text-decoration:underline;" title="點擊展開 10 秒維修拓樸面板">⚡ [10秒終極維修 SOP]</span>
+    <span class="bm-sep">|</span>
+    <span style="color:#059669; font-weight:600;">操作指南：滑鼠上下 放大縮小 ｜ 滑鼠左右 左右橫移 (支援滾輪/拖曳/Shift+滾輪)</span>
+  </div>
+
+  <!-- 2. Main Top Navigation Bar -->
+  <div class="top-nav">
+    <div class="nav-btn" style="padding:0 4px;" title="主選單">
+      <svg viewBox="0 0 18 18"><path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+
+    <!-- Active Commodity Button -->
+    <div class="ticker-search-btn" id="tickerBadgeBtn">
+      <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><path d="M12.5 12.5L16 16"/></svg>
+      <span id="activeTickerText">JP225</span>
+    </div>
+
+    <div class="v-divider"></div>
+
+    <!-- 1:1 Timeframe Pill Selector Bar -->
+    <div class="timeframe-pill-container">
+      <div class="tf-header-label">
+        <span>⏱ 週期:</span>
+      </div>
+
+      <!-- Dropdown Select -->
+      <select class="tf-select-box" id="tfSelect">
+        <option value="1s">1 秒</option>
+        <option value="5s">5 秒</option>
+        <option value="10s">10 秒</option>
+        <option value="15s">15 秒</option>
+        <option value="30s">30 秒</option>
+        <option value="1m" selected>1 分</option>
+        <option value="3m">3 分</option>
+        <option value="5m">5 分</option>
+        <option value="15m">15 分</option>
+        <option value="30m">30 分</option>
+        <option value="60m">60 分</option>
+        <option value="1d">1 日</option>
+      </select>
+
+      <!-- Pill Buttons Strip -->
+      <div class="tf-btn-strip">
+        <button class="tf-btn" data-tf="1s">
+          <span class="tf-badge-orange" id="badge1s">40</span>1s
+        </button>
+        <button class="tf-btn" data-tf="5s">5s</button>
+        <button class="tf-btn" data-tf="10s">10s</button>
+        <button class="tf-btn" data-tf="15s">15s</button>
+        <button class="tf-btn" data-tf="30s">30s</button>
+        <button class="tf-btn active" data-tf="1m">
+          <span class="tf-badge-orange" id="badge1m">20</span>1m
+        </button>
+        <button class="tf-btn" data-tf="5m">5m</button>
+        <button class="tf-btn" data-tf="1d">1D</button>
+      </div>
+    </div>
+
+    <div class="v-divider"></div>
+
+    <!-- Header Topology Strip (9大商品 Port 快速切換與即時連線燈號) -->
+    <div class="header-topology-strip" id="headerTopologyStrip">
+      <span class="topo-header-label">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L2 9h5v7l6-9H8V0z"/></svg>
+        拓樸:
+      </span>
+      <!-- Pills rendered dynamically by JS -->
+    </div>
+
+    <div class="v-divider"></div>
+
+    <!-- Real-time Live Quote Status Pill -->
+    <div class="live-indicator-pill">
+      <div class="live-pulse-dot"></div>
+      <span id="liveStatusText">數據源 5001~5010 連線中</span>
+    </div>
+
+    <div class="nav-right-group">
+      <button class="topo-sop-btn" id="btnOpenTopologyModal" title="開啟 10 秒極速維修 SOP 與 端口拓樸矩陣">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L2 9h5v7l6-9H8V0z"/></svg>
+        10秒維修SOP
+      </button>
+      <div class="nav-btn" title="全螢幕模式" id="fsToggle">
+        <svg viewBox="0 0 18 18"><path d="M3 6V3h3m6 0h3v3m0 6v3h-3m-6 0H3v-3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+
+    <!-- Left Toolbar -->
+    <div class="left-bar">
+      <div class="tool-item" title="十字準線">
+        <svg viewBox="0 0 18 18"><path d="M9 2v5M9 11v5M2 9h5M11 9h5" stroke="currentColor" stroke-width="1.4"/><circle cx="9" cy="9" r="1.3" fill="currentColor"/></svg>
+      </div>
+      <div class="tool-item" title="趨勢線工具">
+        <svg viewBox="0 0 18 18"><circle cx="4" cy="14" r="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="14" cy="4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 12.5l7-7" stroke="currentColor" stroke-width="1.3"/></svg>
+      </div>
+      <div class="tool-item" title="甘氏和斐波那契工具">
+        <svg viewBox="0 0 18 18"><path d="M3 15V3m0 12l12-12m-6 12l6-6m-9 6l9-9" stroke="currentColor" stroke-width="1.2"/></svg>
+      </div>
+      <div class="tool-item" title="幾何形狀">
+        <svg viewBox="0 0 18 18"><rect x="3" y="4" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+      </div>
+      <div class="tool-item" title="放大">
+        <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 5.5v5M5.5 8h5M12 12l4 4" stroke="currentColor" stroke-width="1.3"/></svg>
+      </div>
+      <div class="tool-item" title="磁鐵模式">
+        <svg viewBox="0 0 18 18"><path d="M5 3v5a4 4 0 0 0 8 0V3h-2.5v5a1.5 1.5 0 0 1-3 0V3z" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <!-- Center Chart Box -->
+    <div class="chart-box">
+
+      <!-- Overlay Elements -->
+      <div class="chart-overlay-panel">
+        <div class="legend-line">
+          <div class="symbol-icon-circle" id="legendBadge">JP</div>
+          <div class="sym-header-text">
+            <span id="legendTitle">日經 225 · 1M · OSE · JP225</span>
+            <div class="market-badge">
+              <svg viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
+              <span>≈</span>
+            </div>
+          </div>
+          <div class="ohlc-numbers" id="ohlcRow">
+            載入實時數據中...
+          </div>
+        </div>
+
+        <div class="bid-ask-container">
+          <div class="bid-btn">
+            <span class="num" id="bidPrice">-</span>
+            <span class="lbl">賣出 (Bid)</span>
+          </div>
+          <div class="spread-tag" id="spreadVal">0.00</div>
+          <div class="ask-btn">
+            <span class="num" id="askPrice">-</span>
+            <span class="lbl">買入 (Ask)</span>
+          </div>
+        </div>
+
+        <div class="volume-indicator-row">
+          <div class="vol-toggle-icon">
+            <svg width="7" height="7" viewBox="0 0 10 10"><path d="M1 7l4-4 4 4z" fill="currentColor"/></svg>
+          </div>
+          <span style="color:#089981;">成交量</span>
+          <span style="color:#089981; font-weight:700;" id="volNum">-</span>
+        </div>
+      </div>
+
+      <!-- Canvas Wrap -->
+      <div class="canvas-container" id="canvasWrap">
+        <canvas id="tvCanvas"></canvas>
+
+        <!-- Floating Quick Zoom & Reset Buttons -->
+        <div class="chart-floating-controls">
+          <button class="chart-ctrl-btn" id="btnZoomIn" title="放大 (滾輪向上)">＋</button>
+          <button class="chart-ctrl-btn" id="btnZoomOut" title="縮小 (滾輪向下)">－</button>
+          <button class="chart-ctrl-btn" id="btnResetView" title="重置最適視圖 (雙擊圖表)">⟲ 還原</button>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <div style="font-size:11px; font-weight:600; color:#475569;">
+          即時報價串接: <span style="color:#2563eb;" id="activePortInfo">Port 5001</span>
+          <span style="margin-left: 10px; color:#2563eb; font-weight:600;">[滑鼠操作] 上下：放大縮小 ｜ 左右：左右橫移 (支援滾輪、拖曳、Shift+滾輪、觸控板) ｜ 雙擊：重置</span>
+        </div>
+
+        <div class="bottom-right-meta">
+          <span id="systemClock">--:--:-- UTC+8</span>
+          <span class="adj-badge">ADJ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Watchlist Sidebar -->
+    <div class="watchlist-sidebar">
+      <div class="wl-head-bar">
+        <div class="wl-title-txt">
+          <span>觀察清單 (9大商品)</span>
+          <svg width="7" height="7" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4z" fill="currentColor"/></svg>
+        </div>
+        <div class="wl-btn-group">
+          <div class="wl-btn" title="手動重新整理" id="refreshBtn">
+            <svg viewBox="0 0 18 18"><path d="M9 3v2a4 4 0 1 1-4 4H3a6 6 0 1 0 6-6z" stroke="currentColor" fill="none"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="wl-cols-header">
+        <div>商品</div>
+        <div>最新價</div>
+        <div>漲跌</div>
+        <div>漲跌%</div>
+      </div>
+
+      <!-- Dynamic 9 Products Watchlist Container -->
+      <div class="wl-table-body" id="watchlistContainer">
+        <!-- Dynamically injected from API -->
+      </div>
+
+      <!-- Detail Card of Active Selected Symbol -->
+      <div class="detail-bottom-section" id="detailCard">
+        <div class="detail-card-head">
+          <div class="company-brand-row">
+            <div class="brand-circle-black" id="detailBadge">JP</div>
+            <span class="brand-name-bold" id="detailSymbol">JP225</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:5px; color:#787b86;">
+            <svg width="13" height="13" viewBox="0 0 18 18"><rect x="3" y="3" width="5" height="5" stroke="currentColor" fill="none"/><rect x="10" y="3" width="5" height="5" stroke="currentColor" fill="none"/><rect x="3" y="10" width="5" height="5" stroke="currentColor" fill="none"/><rect x="10" y="10" width="5" height="5" stroke="currentColor" fill="none"/></svg>
+          </div>
+        </div>
+
+        <div class="company-title-link">
+          <span id="detailName">日經 225</span>
+          <svg width="10" height="10" viewBox="0 0 18 18"><path d="M7 3h8v8m0-8L6 12" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+          <span style="color:#94a3b8;" id="detailExchange">· OSE · JP225</span>
+        </div>
+
+        <div class="price-giant-row">
+          <span class="price-giant text-green" id="detailBigPrice">-</span>
+          <span class="currency-tag" id="detailCurr">JPY</span>
+          <span class="main-diff-tag text-green" id="detailDiff">-</span>
+          <span class="main-diff-tag text-green" id="detailPct">-</span>
+        </div>
+
+        <div class="market-status-line">
+          <span class="market-green-dot"></span>
+          <span id="detailDate">即時跳動報價中</span>
+          <span style="margin-left:auto; color:#94a3b8;" id="detailPort">數據源 Port 5001</span>
+        </div>
+
+        <div style="margin-top:auto; font-size:11px; color:#64748b; display:flex; justify-content:space-between;">
+          <span>當前K線成交量: <b id="detailVol" style="color:#1e293b;">-</b></span>
+          <span id="detailBars">- 根K線</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Bar -->
+    <div class="right-bar">
+      <div class="tool-item" title="觀察清單" style="color:var(--color-blue);"><svg viewBox="0 0 18 18"><path d="M3 4h12M3 9h12M3 14h12" stroke="currentColor" stroke-width="1.6"/></svg></div>
+      <div class="tool-item" title="快訊"><svg viewBox="0 0 18 18"><path d="M9 2a5 5 0 0 0-5 5v3l-2 2h14l-2-2V7a5 5 0 0 0-5-5z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <div class="tool-item" title="財經日曆"><svg viewBox="0 0 18 18"><rect x="2" y="3" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6 1v3M12 1v3M2 7h14" stroke="currentColor" stroke-width="1.3"/></svg></div>
+    </div>
+  </div>
+
+  <!-- 10-Second Maintenance & Topology Modal -->
+  <div class="topo-modal-backdrop" id="topoModalBackdrop" style="display:none;">
+    <div class="topo-modal-card">
+      <div class="topo-modal-header">
+        <div class="topo-modal-title">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#f59e0b"><path d="M8 0L2 9h5v7l6-9H8V0z"/></svg>
+          QUANT PRO 系統架構拓樸組織與 10 秒終極維修 SOP
+        </div>
+        <button class="topo-modal-close" id="btnCloseTopologyModal">×</button>
+      </div>
+      <div class="topo-modal-body">
+        
+        <!-- 10 秒維修 SOP -->
+        <div class="sop-alert-box">
+          <div class="sop-alert-title">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3a1 1 0 0 1 1 1v4a1 1 0 0 1-2 0V5a1 1 0 0 1 1-1zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+            ⚡【第一條最高鐵律】連線拒絕 / 暫無數據 10 秒一鍵終極修復 SOP
+          </div>
+          <div style="font-size:12px; color:#78350f; margin-bottom: 8px;">
+            接手任何「連線拒絕 (ERR_CONNECTION_REFUSED)」或「數據中斷/暫無數據」時，直接於 PowerShell 終端機執行下方指令，嚴禁盲搜 C 槽！
+          </div>
+
+          <div style="font-weight:700; color:#1e293b; margin-top:6px;">① 10 秒一鍵全自動修復與端口驗證指令：</div>
+          <div class="sop-cmd-row">
+            <code>&amp; "D:\PortableRuntime\Python312\python.exe" "D:\QUANT_SYSTEM_PRO_V2\HEAL_AND_VERIFY_10S.py"</code>
+            <button class="copy-btn" onclick="copyCmd('&amp; &quot;D:\\PortableRuntime\\Python312\\python.exe&quot; &quot;D:\\QUANT_SYSTEM_PRO_V2\\HEAL_AND_VERIFY_10S.py&quot;', this)">複製指令</button>
+          </div>
+
+          <div style="font-weight:700; color:#1e293b; margin-top:8px;">② 檢查 9 大商品 .pkl 實體數據健康度：</div>
+          <div class="sop-cmd-row">
+            <code>&amp; "D:\PortableRuntime\Python312\python.exe" "D:\QUANT_SYSTEM_PRO_V2\DATA_HEALTH_DOCTOR.py"</code>
+            <button class="copy-btn" onclick="copyCmd('&amp; &quot;D:\\PortableRuntime\\Python312\\python.exe&quot; &quot;D:\\QUANT_SYSTEM_PRO_V2\\DATA_HEALTH_DOCTOR.py&quot;', this)">複製指令</button>
+          </div>
+
+          <div style="font-weight:700; color:#1e293b; margin-top:8px;">③ 重啟當前 8000 看盤服務 (tv_clone_6000)：</div>
+          <div class="sop-cmd-row">
+            <code>&amp; "D:\PortableRuntime\Python312\pythonw.exe" "C:\Users\Admin\.gemini\antigravity\scratch\tv_clone_6000\server.py"</code>
+            <button class="copy-btn" onclick="copyCmd('&amp; &quot;D:\\PortableRuntime\\Python312\\pythonw.exe&quot; &quot;C:\\Users\\Admin\\.gemini\\antigravity\\scratch\\tv_clone_6000\\server.py&quot;', this)">複製指令</button>
+          </div>
+        </div>
+
+        <!-- 端口架構矩陣 -->
+        <div>
+          <div style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span>🌐 9 大商品微服務端口與數據拓樸矩陣 (Port 5001 ~ 5010)</span>
+            <span style="font-size:11px; font-weight:normal; color:#64748b;">自動實時檢測中</span>
+          </div>
+          <table class="topo-table">
+            <thead>
+              <tr>
+                <th style="width:75px;">端口</th>
+                <th style="width:85px;">商品代碼</th>
+                <th style="width:105px;">商品名稱</th>
+                <th style="width:100px;">即時報價</th>
+                <th>實體 Pickle 數據檔案位置</th>
+                <th style="width:85px; text-align:center;">狀態</th>
+                <th style="width:70px; text-align:center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="topoModalTbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 永久防禦架構 -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px 12px; font-size:11.5px; color:#475569; line-height:1.6;">
+          <b style="color:#0f172a;">🛡️ 核心根因與永久防禦架構：</b><br>
+          1. <b>唯一專案路徑</b>：<code>D:\QUANT_SYSTEM_PRO_V2\</code> 與 <code>D:\ALL_PORTS_5001_5009\</code>（嚴禁在 C 槽盲搜！）。<br>
+          2. <b>唯一指定 Python 引擎</b>：<code>D:\PortableRuntime\Python312\pythonw.exe</code>（嚴禁使用桌面 Thonny Python 3.10，因 Thonny Python 3.10 + pandas 1.x 無法讀取 Python 3.12 + pandas 2.x 的 Pickle）。<br>
+          3. <b>交互操控鐵律</b>：滑鼠上下是放大縮小（支援滾輪上下與垂直拖曳），滑鼠左右是左右橫移（支援滾輪左右、水平拖曳與 Shift+滾輪）。
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('tvCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrap = document.getElementById('canvasWrap');
+
+    let currentSymbol = 'JP225';
+    let currentTimeframe = '1m';
+    let currentCandles = [];
+    let currentSummary = null;
+    let watchlistData = [];
+    let prevPrices = {};
+
+    let cWidth = 0;
+    let cHeight = 0;
+    const yAxisWidth = 74;
+    const xAxisHeight = 24;
+
+    let minP = 0;
+    let maxP = 1;
+
+    // Viewport & Zoom & Pan states
+    let visibleCount = 80;   // Number of visible bars on screen
+    let offsetRight = 8;     // Blank bars on right side
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartOffset = 0;
+    let dragStartVisible = 80;
+    let dragMode = null; // 'pan_x' | 'zoom_y'
+
+    let crossX = -1;
+    let crossY = -1;
+    let hoverIdx = -1;
+    let isTracking = false;
+
+    const symDecMap = {
+      'JP225': 1, 'XAU': 2, 'JPY': 3, 'OIL': 2, 'TX': 0, 'GBP': 4, 'EUR': 4, 'BTC': 2, 'US30': 1
+    };
+
+    function fmtNum(val, dec = 2) {
+      if (val === null || val === undefined || isNaN(val)) return '-';
+      return Number(val).toLocaleString('en-US', {
+        minimumFractionDigits: dec,
+        maximumFractionDigits: dec
+      });
+    }
+
+    const TOPO_CONFIG = [
+      { symbol: 'JP225', port: 5001, name: '日經 225', short: '5001 JP', file: 'JP225\\Combined_JP225.pkl' },
+      { symbol: 'XAU', port: 5002, name: '現貨黃金', short: '5002 XAU', file: 'XAU\\Combined_XAUUSD.pkl' },
+      { symbol: 'JPY', port: 5003, name: '美元日圓', short: '5003 JPY', file: 'JPY\\Combined_USDJPY.pkl' },
+      { symbol: 'OIL', port: 5004, name: '西德州原油', short: '5004 OIL', file: 'OIL\\Combined_USOIL.pkl' },
+      { symbol: 'TX', port: 5005, name: '台指期', short: '5005 TX', file: 'TX\\Combined_TX.pkl' },
+      { symbol: 'GBP', port: 5007, name: '英鎊美元', short: '5007 GBP', file: 'GBP\\Combined_GBPUSD.pkl' },
+      { symbol: 'EUR', port: 5008, name: '歐元美元', short: '5008 EUR', file: 'EUR\\Combined_EURUSD.pkl' },
+      { symbol: 'BTC', port: 5009, name: '比特幣', short: '5009 BTC', file: 'BTC\\Combined_BTCUSD.pkl' },
+      { symbol: 'US30', port: 5010, name: '道瓊工業', short: '5010 US30', file: 'US30\\Combined_US30.pkl' },
+    ];
+
+    function renderHeaderTopologyStrip() {
+      const container = document.getElementById('headerTopologyStrip');
+      if (!container) return;
+      container.innerHTML = `
+        <span class="topo-header-label" title="9大商品微服務端口連線狀態">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L2 9h5v7l6-9H8V0z"/></svg>
+          拓樸:
+        </span>
+      `;
+      TOPO_CONFIG.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `topo-pill ${item.symbol === currentSymbol ? 'active' : ''}`;
+        btn.id = `topo-pill-${item.symbol}`;
+        btn.title = `[Port ${item.port}] ${item.name} (${item.symbol}) - 點擊即時切換`;
+        btn.innerHTML = `${item.short} <span class="topo-dot" id="topo-dot-${item.symbol}"></span>`;
+        btn.addEventListener('click', () => {
+          switchSymbol(item.symbol, currentTimeframe);
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    const FALLBACK_WATCHLIST = [
+      { symbol: 'JP225', port: 5001, name: '日經 225', category: '指數期貨', exchange: 'OSE · JP225', currency: 'JPY', color: '#0077c5', badge: 'JP', decimals: 1, open: 64750, last_close: 64800, change: 120, change_pct: 0.19, volume: 154200 },
+      { symbol: 'XAU', port: 5002, name: '現貨黃金', category: '貴金屬', exchange: 'FX · XAUUSD', currency: 'USD', color: '#f59e0b', badge: 'AU', decimals: 2, open: 2740, last_close: 2745.5, change: 12.3, change_pct: 0.45, volume: 89000 },
+      { symbol: 'JPY', port: 5003, name: '美元日圓', category: '外匯', exchange: 'FX · USDJPY', currency: 'JPY', color: '#10b981', badge: 'JPY', decimals: 3, open: 152.1, last_close: 152.45, change: -0.15, change_pct: -0.10, volume: 64000 },
+      { symbol: 'OIL', port: 5004, name: '西德州原油', category: '能源', exchange: 'NYMEX · USOIL', currency: 'USD', color: '#374151', badge: 'CL', decimals: 2, open: 71.2, last_close: 71.85, change: 0.85, change_pct: 1.20, volume: 43000 },
+      { symbol: 'TX', port: 5005, name: '台指期', category: '指數期貨', exchange: 'TAIFEX · TX', currency: 'TWD', color: '#ef4444', badge: 'TX', decimals: 0, open: 23200, last_close: 23350, change: 150, change_pct: 0.65, volume: 198000 },
+      { symbol: 'GBP', port: 5007, name: '英鎊美元', category: '外匯', exchange: 'FX · GBPUSD', currency: 'USD', color: '#2563eb', badge: 'GB', decimals: 4, open: 1.298, last_close: 1.3012, change: 0.0032, change_pct: 0.25, volume: 51000 },
+      { symbol: 'EUR', port: 5008, name: '歐元美元', category: '外匯', exchange: 'FX · EURUSD', currency: 'USD', color: '#6366f1', badge: 'EU', decimals: 4, open: 1.082, last_close: 1.0845, change: -0.0012, change_pct: -0.11, volume: 72000 },
+      { symbol: 'BTC', port: 5009, name: '比特幣', category: '加密貨幣', exchange: 'CRYPTO · BTCUSD', currency: 'USD', color: '#f97316', badge: 'BTC', decimals: 2, open: 71500, last_close: 72150, change: 1450, change_pct: 2.05, volume: 240000 },
+      { symbol: 'US30', port: 5010, name: '道瓊工業', category: '指數期貨', exchange: 'CBOT · US30', currency: 'USD', color: '#0284c7', badge: 'US', decimals: 1, open: 42200, last_close: 42380, change: 210, change_pct: 0.50, volume: 112000 },
+    ];
+
+    function generateSimulatedCandles(basePrice, count = 180) {
+      const now = Math.floor(Date.now() / 1000);
+      const bars = [];
+      let p = basePrice * 0.985;
+      const step = Math.max(0.001, basePrice * 0.0012);
+      for (let i = 0; i < count; i++) {
+        const t = now - (count - 1 - i) * 60;
+        const drift = (Math.random() - 0.492) * step;
+        const o = p;
+        const c = p + drift;
+        const h = Math.max(o, c) + Math.random() * step * 0.5;
+        const l = Math.min(o, c) - Math.random() * step * 0.5;
+        const v = Math.floor(10 + Math.random() * 50);
+        const d = new Date(t * 1000);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        bars.push({ date: dateStr, time: t, open: o, high: h, low: l, close: c, volume: v });
+        p = c;
+      }
+      if (bars.length > 0) bars[bars.length - 1].close = basePrice;
+      return bars;
+    }
+
+    // 1. Fetch Watchlist
+    async function loadWatchlist() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlSym = urlParams.get('symbol');
+      const urlTf = urlParams.get('tf');
+      if (urlSym) currentSymbol = urlSym.toUpperCase();
+      if (urlTf) currentTimeframe = urlTf.toLowerCase();
+
+      try {
+        const res = await fetch('/api/watchlist');
+        if (!res.ok) throw new Error('API 404');
+        watchlistData = await res.json();
+      } catch (err) {
+        // Fallback for GitHub Pages static hosting
+        watchlistData = JSON.parse(JSON.stringify(FALLBACK_WATCHLIST));
+      }
+
+      renderHeaderTopologyStrip();
+      renderWatchlistUI();
+      if (!currentSummary && watchlistData.length > 0) {
+        const initSym = urlSym ? urlSym.toUpperCase() : watchlistData[0].symbol;
+        await switchSymbol(initSym, currentTimeframe);
+      }
+    }
+
+    function renderWatchlistUI() {
+      const container = document.getElementById('watchlistContainer');
+      container.innerHTML = '';
+
+      watchlistData.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `wl-row-item ${item.symbol === currentSymbol ? 'active-item' : ''}`;
+        row.setAttribute('data-symbol', item.symbol);
+        row.id = `wl-row-${item.symbol}`;
+
+        const isUp = item.change >= 0;
+        const colorCls = isUp ? 'text-green' : 'text-red';
+        const sign = isUp ? '+' : '';
+        const dec = item.decimals !== undefined ? item.decimals : 2;
+        const chgDec = dec > 2 ? dec : (Math.abs(item.change) >= 100 ? 1 : dec);
+
+        row.innerHTML = `
+          <div class="wl-sym-box">
+            <div class="sym-logo-icon" style="background: ${item.color};">${item.badge}</div>
+            <span class="sym-lbl">${item.symbol}</span>
+            <span class="port-tag">:${item.port}</span>
+          </div>
+          <div class="price-num" id="wl-price-${item.symbol}">${fmtNum(item.last_close, dec)}</div>
+          <div class="chg-num ${colorCls}" id="wl-chg-${item.symbol}">${sign}${fmtNum(item.change, chgDec)}</div>
+          <div class="pct-num ${colorCls}" id="wl-pct-${item.symbol}">${sign}${item.change_pct.toFixed(2)}%</div>
+        `;
+
+        row.addEventListener('click', () => {
+          switchSymbol(item.symbol, currentTimeframe);
+        });
+
+        container.appendChild(row);
+      });
+    }
+
+    // 2. Switch Commodity Symbol or Timeframe
+    async function switchSymbol(sym, tf = currentTimeframe) {
+      currentSymbol = sym;
+      currentTimeframe = tf;
+
+      // Update URL parameters without reload
+      try {
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('symbol', sym);
+        newUrl.searchParams.set('tf', tf);
+        window.history.replaceState({}, '', newUrl);
+      } catch(e) {}
+
+      document.querySelectorAll('.wl-row-item').forEach(r => {
+        r.classList.toggle('active-item', r.getAttribute('data-symbol') === sym);
+      });
+
+      document.querySelectorAll('.topo-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `topo-pill-${sym}`);
+      });
+
+      document.getElementById('activeTickerText').textContent = sym;
+      document.getElementById('tfSelect').value = tf;
+
+      document.querySelectorAll('.tf-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tf') === tf);
+      });
+
+      try {
+        const res = await fetch(`/api/kline?symbol=${sym}&timeframe=${tf}`);
+        if (!res.ok) throw new Error('API 404');
+        const data = await res.json();
+        currentSummary = data.summary;
+        currentCandles = data.candles || [];
+
+        // Apply live tick if exists
+        if (data.live_tick && data.live_tick.price) {
+          applyLiveTick(sym, data.live_tick);
+        }
+      } catch (err) {
+        // Fallback for GitHub Pages static hosting
+        currentSummary = (watchlistData && watchlistData.find(p => p.symbol === sym)) 
+          || FALLBACK_WATCHLIST.find(p => p.symbol === sym) 
+          || FALLBACK_WATCHLIST[0];
+        currentCandles = generateSimulatedCandles(currentSummary.last_close, 180);
+      }
+
+      // Reset view for new timeframe/symbol
+      visibleCount = Math.min(80, Math.max(20, currentCandles.length));
+      offsetRight = 8;
+
+      updateHeaderAndDetails();
+      calculateScaleBounds();
+      resetCrosshairToLatest();
+      resizeCanvas();
+    }
+
+    function updateHeaderAndDetails() {
+      if (!currentSummary) return;
+
+      const dec = currentSummary.decimals !== undefined ? currentSummary.decimals : 2;
+      const isUp = currentSummary.change >= 0;
+      const colorCls = isUp ? 'text-green' : 'text-red';
+      const sign = isUp ? '+' : '';
+
+      document.getElementById('legendBadge').textContent = currentSummary.badge;
+      document.getElementById('legendBadge').style.background = currentSummary.color;
+      document.getElementById('legendTitle').textContent = `${currentSummary.name} · ${currentTimeframe.toUpperCase()} · ${currentSummary.exchange}`;
+      document.getElementById('activePortInfo').textContent = `Port ${currentSummary.port}`;
+
+      const ohlcEl = document.getElementById('ohlcRow');
+      ohlcEl.innerHTML = `開 - ${fmtNum(currentSummary.open, dec)} 高 - ${fmtNum(currentSummary.high, dec)} 低 - ${fmtNum(currentSummary.low, dec)} 收 - ${fmtNum(currentSummary.last_close, dec)} ${sign}${fmtNum(currentSummary.change, dec)} (${sign}${currentSummary.change_pct.toFixed(2)}%)`;
+      ohlcEl.style.color = isUp ? 'var(--color-green)' : 'var(--color-red)';
+
+      document.getElementById('bidPrice').textContent = fmtNum(currentSummary.last_close, dec);
+      document.getElementById('askPrice').textContent = fmtNum(currentSummary.last_close, dec);
+      document.getElementById('volNum').textContent = `${(currentSummary.volume / 1000).toFixed(1)}K`;
+
+      // Detail card
+      document.getElementById('detailBadge').textContent = currentSummary.badge;
+      document.getElementById('detailBadge').style.background = currentSummary.color;
+      document.getElementById('detailSymbol').textContent = currentSummary.symbol;
+      document.getElementById('detailName').textContent = currentSummary.name;
+      document.getElementById('detailExchange').textContent = `· ${currentSummary.exchange}`;
+      document.getElementById('detailPort').textContent = `數據源 Port ${currentSummary.port} · 純K線`;
+
+      const bigEl = document.getElementById('detailBigPrice');
+      bigEl.textContent = fmtNum(currentSummary.last_close, dec);
+      bigEl.className = `price-giant ${colorCls}`;
+
+      document.getElementById('detailCurr').textContent = currentSummary.currency;
+
+      const diffEl = document.getElementById('detailDiff');
+      diffEl.textContent = `${sign}${fmtNum(currentSummary.change, dec)}`;
+      diffEl.className = `main-diff-tag ${colorCls}`;
+
+      const pctEl = document.getElementById('detailPct');
+      pctEl.textContent = `${sign}${currentSummary.change_pct.toFixed(2)}%`;
+      pctEl.className = `main-diff-tag ${colorCls}`;
+
+      document.getElementById('detailDate').textContent = `即時報價時間 : ${new Date().toLocaleTimeString()}`;
+      document.getElementById('detailVol').textContent = fmtNum(currentSummary.volume, 0);
+      document.getElementById('detailBars').textContent = `${currentCandles.length} 根K線`;
+    }
+
+    // Apply Live Tick to UI and Candlestick
+    function applyLiveTick(sym, tick) {
+      if (!tick || !tick.price) return;
+      const price = tick.price;
+      const dec = symDecMap[sym] !== undefined ? symDecMap[sym] : 2;
+
+      // 1. If this is the active symbol, update chart's last candle
+      if (sym === currentSymbol) {
+        if (currentCandles && currentCandles.length > 0) {
+          const lastC = currentCandles[currentCandles.length - 1];
+          lastC.close = price;
+          if (price > lastC.high) lastC.high = price;
+          if (price < lastC.low) lastC.low = price;
+        }
+        if (currentSummary) {
+          currentSummary.last_close = price;
+          if (tick.diff !== undefined) {
+            currentSummary.change = tick.diff;
+            currentSummary.change_pct = (tick.diff / (price - tick.diff)) * 100;
+          }
+        }
+        if (tick.bid) document.getElementById('bidPrice').textContent = fmtNum(tick.bid, dec);
+        if (tick.ask) document.getElementById('askPrice').textContent = fmtNum(tick.ask, dec);
+        if (tick.bid && tick.ask) {
+          const sp = (tick.ask - tick.bid).toFixed(dec > 2 ? dec : 2);
+          document.getElementById('spreadVal').textContent = sp;
+        }
+        if (!isTracking) {
+          updateHeaderAndDetails();
+        }
+        calculateScaleBounds();
+        draw();
+      }
+
+      // 2. Update Watchlist row with flashing animation
+      const priceEl = document.getElementById(`wl-price-${sym}`);
+      const chgEl = document.getElementById(`wl-chg-${sym}`);
+      const pctEl = document.getElementById(`wl-pct-${sym}`);
+
+      if (priceEl) {
+        const oldPrice = prevPrices[sym] || price;
+        priceEl.textContent = fmtNum(price, dec);
+
+        if (price > oldPrice) {
+          priceEl.classList.remove('price-flash-red');
+          priceEl.classList.add('price-flash-green');
+          setTimeout(() => priceEl.classList.remove('price-flash-green'), 300);
+        } else if (price < oldPrice) {
+          priceEl.classList.remove('price-flash-green');
+          priceEl.classList.add('price-flash-red');
+          setTimeout(() => priceEl.classList.remove('price-flash-red'), 300);
+        }
+        prevPrices[sym] = price;
+      }
+
+      if (chgEl && tick.diff !== undefined) {
+        const isUp = tick.diff >= 0;
+        const colorCls = isUp ? 'text-green' : 'text-red';
+        const sign = isUp ? '+' : '';
+        const chgDec = dec > 2 ? dec : (Math.abs(tick.diff) >= 100 ? 1 : dec);
+        chgEl.className = `chg-num ${colorCls}`;
+        chgEl.textContent = `${sign}${fmtNum(tick.diff, chgDec)}`;
+
+        if (pctEl) {
+          const pct = (tick.diff / (price - tick.diff)) * 100;
+          pctEl.className = `pct-num ${colorCls}`;
+          pctEl.textContent = `${sign}${pct.toFixed(2)}%`;
+        }
+      }
+    }
+
+    // 3. Real-time Live Quotes Poller (Every 800ms)
+    async function pollLiveQuotes() {
+      try {
+        const res = await fetch('/api/live_quotes');
+        if (!res.ok) throw new Error('Offline');
+        const ticks = await res.json();
+        let anyOnline = false;
+        TOPO_CONFIG.forEach(p => {
+          const q = ticks[p.symbol];
+          const dot = document.getElementById(`topo-dot-${p.symbol}`);
+          const hasPrice = q && q.price && q.price > 0;
+          if (dot) {
+            dot.className = `topo-dot ${hasPrice ? '' : 'err'}`;
+          }
+          if (hasPrice) anyOnline = true;
+          if (q) applyLiveTick(p.symbol, q);
+        });
+        const statusEl = document.getElementById('liveStatusText');
+        if (statusEl) {
+          statusEl.textContent = anyOnline ? '數據源 5001~5010 連線中' : '⚠️ 等待數據源連線';
+        }
+      } catch (err) {
+        // Fallback live simulation (for GitHub Pages static demo)
+        const activeProd = (watchlistData && watchlistData.find(p => p.symbol === currentSymbol)) || FALLBACK_WATCHLIST[0];
+        const step = Math.max(0.0001, activeProd.last_close * 0.00015);
+        const drift = (Math.random() - 0.495) * step;
+        const newP = activeProd.last_close + drift;
+        activeProd.last_close = newP;
+        activeProd.change += drift;
+        applyLiveTick(currentSymbol, { price: newP, diff: activeProd.change });
+        TOPO_CONFIG.forEach(p => {
+          const dot = document.getElementById(`topo-dot-${p.symbol}`);
+          if (dot) dot.className = 'topo-dot';
+        });
+        const statusEl = document.getElementById('liveStatusText');
+        if (statusEl) statusEl.textContent = '展示模式 (即時跳動中)';
+      }
+    }
+    setInterval(pollLiveQuotes, 800);
+
+    // Viewport calculations: maps bar index i to screen X
+    function barIndexToX(i, plotW) {
+      const N = currentCandles.length;
+      const barWidth = plotW / visibleCount;
+      return plotW - (offsetRight + (N - 1 - i) + 0.5) * barWidth;
+    }
+
+    // Maps screen X to closest bar index i
+    function xToBarIndex(x, plotW) {
+      const N = currentCandles.length;
+      const barWidth = plotW / visibleCount;
+      const offsetBars = (plotW - x) / barWidth;
+      return Math.round(N - 1 - (offsetBars - offsetRight - 0.5));
+    }
+
+    function getVisibleBarRange(plotW) {
+      if (!currentCandles || currentCandles.length === 0) return { start: 0, end: 0 };
+      const N = currentCandles.length;
+      const barWidth = plotW / visibleCount;
+      const start = Math.max(0, Math.floor(N - 1 - (plotW / barWidth - offsetRight)));
+      const end = Math.min(N - 1, Math.ceil(N - 1 + offsetRight));
+      return { start, end };
+    }
+
+    function clampViewport() {
+      if (!currentCandles || currentCandles.length === 0) return;
+      const N = currentCandles.length;
+      const maxOffset = Math.max(5, Math.floor(visibleCount * 0.8));
+      const minOffset = -Math.max(0, N - 5);
+      if (offsetRight > maxOffset) offsetRight = maxOffset;
+      if (offsetRight < minOffset) offsetRight = minOffset;
+    }
+
+    // Auto calculate price bounds based ONLY on VISIBLE candles!
+    function calculateScaleBounds() {
+      if (!currentCandles || currentCandles.length === 0) return;
+      const plotW = cWidth - yAxisWidth;
+      const { start, end } = getVisibleBarRange(plotW);
+
+      let min = Infinity;
+      let max = -Infinity;
+      let found = false;
+
+      for (let i = start; i <= end; i++) {
+        const c = currentCandles[i];
+        if (c.low < min) min = c.low;
+        if (c.high > max) max = c.high;
+        found = true;
+      }
+
+      if (!found || min === Infinity) {
+        min = currentCandles[currentCandles.length - 1].close * 0.98;
+        max = currentCandles[currentCandles.length - 1].close * 1.02;
+      }
+
+      const pad = (max - min) * 0.12 || (max * 0.02) || 1;
+      minP = min - pad;
+      maxP = max + pad;
+    }
+
+    function resetCrosshairToLatest() {
+      if (!currentCandles || currentCandles.length === 0) return;
+      const plotW = cWidth - yAxisWidth;
+      hoverIdx = currentCandles.length - 1;
+      crossX = barIndexToX(hoverIdx, plotW);
+      crossY = priceToY(currentCandles[hoverIdx].close);
+    }
+
+    function priceToY(p) {
+      const plotH = cHeight - xAxisHeight;
+      return plotH - ((p - minP) / (maxP - minP)) * plotH;
+    }
+
+    function yToPrice(y) {
+      const plotH = cHeight - xAxisHeight;
+      return minP + ((plotH - y) / plotH) * (maxP - minP);
+    }
+
+    function resizeCanvas() {
+      const rect = wrap.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      cWidth = rect.width;
+      cHeight = rect.height;
+      canvas.width = cWidth * dpr;
+      canvas.height = cHeight * dpr;
+      ctx.scale(dpr, dpr);
+
+      calculateScaleBounds();
+      if (!isTracking) {
+        resetCrosshairToLatest();
+      }
+      draw();
+    }
+
+    // Draw Pure Candlestick Chart with Zoom and Pan
+    function draw() {
+      if (!cWidth || !cHeight || !currentCandles || currentCandles.length === 0) return;
+
+      const plotW = cWidth - yAxisWidth;
+      const plotH = cHeight - xAxisHeight;
+
+      ctx.clearRect(0, 0, cWidth, cHeight);
+
+      // 1. Grid
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#f0f3fa';
+      ctx.setLineDash([2, 2]);
+
+      const ticksCount = 9;
+      const stepPrice = (maxP - minP) / ticksCount;
+      const ticks = [];
+      for (let i = 1; i < ticksCount; i++) {
+        ticks.push(minP + i * stepPrice);
+      }
+
+      for (const t of ticks) {
+        const y = Math.round(priceToY(t)) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(plotW, y);
+        ctx.stroke();
+      }
+
+      // Vertical time grid lines
+      const { start, end } = getVisibleBarRange(plotW);
+      const visibleBarsCount = end - start + 1;
+      const timeInterval = Math.max(1, Math.floor(visibleBarsCount / 7));
+      const timeLabels = [];
+
+      for (let i = start; i <= end; i += timeInterval) {
+        const c = currentCandles[i];
+        const x = Math.round(barIndexToX(i, plotW)) + 0.5;
+        if (x >= 0 && x <= plotW) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, plotH);
+          ctx.stroke();
+
+          let lbl = c.date;
+          // Format clean labels: if date is like "2026-10-29 09:00", show "09:00"
+          if (lbl.length > 11) {
+            lbl = lbl.substring(11); // HH:MM
+          }
+          timeLabels.push({ x: x, name: lbl });
+        }
+      }
+      ctx.setLineDash([]);
+
+      // 2. Proprietary QUANT PRO Watermark at bottom-left
+      ctx.save();
+      ctx.fillStyle = 'rgba(100, 116, 139, 0.45)';
+      ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+      ctx.fillText('QUANT PRO · 9-COMMODITY STREAM (5001-5010)', 24, plotH - 14);
+      ctx.restore();
+
+      // 3. Volume Histogram at Bottom
+      let maxVol = 1;
+      for (let i = start; i <= end; i++) {
+        if (currentCandles[i].volume > maxVol) maxVol = currentCandles[i].volume;
+      }
+      const volH = 65;
+      const barWidth = plotW / visibleCount;
+      const candleW = Math.max(2, barWidth * 0.72);
+
+      for (let i = start; i <= end; i++) {
+        const item = currentCandles[i];
+        const cx = barIndexToX(i, plotW);
+        if (cx < -candleW || cx > plotW + candleW) continue;
+        const vHeight = (item.volume / maxVol) * volH;
+        const vy = plotH - vHeight;
+        const up = item.close >= item.open;
+        ctx.fillStyle = up ? 'rgba(8, 153, 129, 0.35)' : 'rgba(242, 54, 69, 0.35)';
+        ctx.fillRect(cx - candleW / 2, vy, candleW, vHeight);
+      }
+
+      // 4. Pure Candlesticks
+      for (let i = start; i <= end; i++) {
+        const item = currentCandles[i];
+        const cx = Math.round(barIndexToX(i, plotW));
+        if (cx < -candleW || cx > plotW + candleW) continue;
+
+        const yO = priceToY(item.open);
+        const yC = priceToY(item.close);
+        const yH = priceToY(item.high);
+        const yL = priceToY(item.low);
+
+        const up = item.close >= item.open;
+        const color = up ? '#089981' : '#f23645';
+
+        // Wick
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx, Math.round(yH));
+        ctx.lineTo(cx, Math.round(yL));
+        ctx.stroke();
+
+        // Body
+        const top = Math.min(yO, yC);
+        const bot = Math.max(yO, yC);
+        const cH = Math.max(1.5, bot - top);
+
+        ctx.fillStyle = color;
+        ctx.fillRect(cx - candleW / 2, top, candleW, cH);
+      }
+
+      // 5. Crosshair Lines
+      if (crossX >= 0 && crossX <= plotW && crossY >= 0 && crossY <= plotH) {
+        ctx.save();
+        ctx.strokeStyle = '#787b86';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        ctx.beginPath();
+        ctx.moveTo(0, Math.round(crossY) + 0.5);
+        ctx.lineTo(plotW, Math.round(crossY) + 0.5);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(Math.round(crossX) + 0.5, 0);
+        ctx.lineTo(Math.round(crossX) + 0.5, plotH);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 6. Right Price Scale
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(plotW, 0, yAxisWidth, plotH);
+      ctx.strokeStyle = '#e0e3eb';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(plotW + 0.5, 0);
+      ctx.lineTo(plotW + 0.5, plotH);
+      ctx.stroke();
+
+      const dec = currentSummary && currentSummary.decimals !== undefined ? currentSummary.decimals : 2;
+
+      ctx.fillStyle = '#787b86';
+      ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (const t of ticks) {
+        const y = priceToY(t);
+        ctx.fillText(fmtNum(t, dec), plotW + 6, y);
+      }
+
+      // Current Live Price Badge
+      if (currentSummary) {
+        const yCur = priceToY(currentSummary.last_close);
+        const badgeColor = currentSummary.change >= 0 ? '#089981' : '#f23645';
+        drawRightTag(plotW, yCur, fmtNum(currentSummary.last_close, dec), badgeColor, '#fff');
+      }
+
+      // Crosshair Price Tag: Black with [+]
+      if (crossY >= 0 && crossY <= plotH) {
+        const pVal = yToPrice(crossY);
+        drawRightTag(plotW, crossY, '+ ' + fmtNum(pVal, dec), '#131722', '#fff');
+      }
+
+      // Gear icon at bottom right of scale
+      ctx.fillStyle = '#787b86';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('⚙', plotW + yAxisWidth - 14, plotH - 8);
+
+      // 7. Time Scale
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, plotH, cWidth, xAxisHeight);
+      ctx.strokeStyle = '#e0e3eb';
+      ctx.beginPath();
+      ctx.moveTo(0, plotH + 0.5);
+      ctx.lineTo(cWidth, plotH + 0.5);
+      ctx.stroke();
+
+      ctx.fillStyle = '#787b86';
+      ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const m of timeLabels) {
+        if (m.x < plotW - 15) {
+          ctx.fillText(m.name, m.x, plotH + 12);
+        }
+      }
+
+      // Bottom Crosshair Date Tag
+      if (crossX >= 0 && crossX <= plotW && hoverIdx >= 0 && hoverIdx < currentCandles.length) {
+        const item = currentCandles[hoverIdx];
+        const tagText = `${item.date}`;
+
+        ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+        const tW = ctx.measureText(tagText).width + 16;
+        const tagLeft = Math.max(2, Math.min(plotW - tW - 2, crossX - tW / 2));
+
+        ctx.fillStyle = '#131722';
+        ctx.fillRect(tagLeft, plotH + 1, tW, xAxisHeight - 2);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(tagText, tagLeft + tW / 2, plotH + 12);
+      }
+    }
+
+    function drawRightTag(x, y, text, bg, color) {
+      ctx.save();
+      const h = 18;
+      ctx.font = 'bold 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+      const tw = ctx.measureText(text).width;
+      const bw = tw + 10;
+
+      ctx.fillStyle = bg;
+      ctx.fillRect(x + 1, y - h / 2, bw, h);
+
+      ctx.fillStyle = color;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x + 5, y);
+      ctx.restore();
+    }
+
+    // Mouse Tracking for Pure K-line inspection & dragging
+    wrap.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const rect = wrap.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const plotW = cWidth - yAxisWidth;
+      if (x > plotW) return; // ignore right axis
+
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      dragStartOffset = offsetRight;
+      dragStartVisible = visibleCount;
+      dragMode = null;
+      wrap.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!currentCandles || currentCandles.length === 0) return;
+      const rect = wrap.getBoundingClientRect();
+      const plotW = cWidth - yAxisWidth;
+      const plotH = cHeight - xAxisHeight;
+
+      if (isDragging) {
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+
+        if (!dragMode) {
+          if (Math.hypot(dx, dy) >= 4) {
+            dragMode = Math.abs(dx) >= Math.abs(dy) ? 'pan_x' : 'zoom_y';
+          }
+        }
+
+        if (dragMode === 'pan_x') {
+          // 滑鼠左右 是左右橫移 (拖曳跟隨鼠標實時平移歷史)
+          const barWidth = plotW / visibleCount;
+          const barsMoved = Math.round(dx / barWidth);
+          offsetRight = dragStartOffset - barsMoved;
+          clampViewport();
+          calculateScaleBounds();
+          draw();
+          return;
+        } else if (dragMode === 'zoom_y') {
+          // 滑鼠上下 是放大縮小 (向上拖曳放大，向下拖曳縮小)
+          const zoomFactor = Math.exp(-dy * 0.006);
+          const newVisible = Math.max(15, Math.min(Math.min(500, currentCandles.length), Math.round(dragStartVisible * zoomFactor)));
+          if (newVisible !== visibleCount) {
+            visibleCount = newVisible;
+            clampViewport();
+            calculateScaleBounds();
+            draw();
+          }
+          return;
+        }
+        return;
+      }
+
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (x >= 0 && x <= plotW && y >= 0 && y <= plotH) {
+        isTracking = true;
+        crossX = x;
+        crossY = y;
+
+        hoverIdx = xToBarIndex(x, plotW);
+        if (hoverIdx < 0) hoverIdx = 0;
+        if (hoverIdx >= currentCandles.length) hoverIdx = currentCandles.length - 1;
+
+        const it = currentCandles[hoverIdx];
+        const diff = it.close - it.open;
+        const pct = (diff / it.open) * 100;
+        const sign = diff >= 0 ? '+' : '';
+        const dec = currentSummary ? currentSummary.decimals : 2;
+
+        const ohlcEl = document.getElementById('ohlcRow');
+        ohlcEl.innerHTML = `開 - ${fmtNum(it.open, dec)} 高 - ${fmtNum(it.high, dec)} 低 - ${fmtNum(it.low, dec)} 收 - ${fmtNum(it.close, dec)} ${sign}${fmtNum(diff, dec)} (${sign}${pct.toFixed(2)}%)`;
+        ohlcEl.style.color = diff >= 0 ? 'var(--color-green)' : 'var(--color-red)';
+
+        document.getElementById('volNum').textContent = `${(it.volume / 1000).toFixed(1)}K`;
+
+        draw();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        dragMode = null;
+        wrap.style.cursor = 'crosshair';
+      }
+    });
+
+    wrap.addEventListener('mouseleave', () => {
+      if (!isDragging) {
+        isTracking = false;
+        resetCrosshairToLatest();
+        updateHeaderAndDetails();
+        draw();
+      }
+    });
+
+    // Mouse Wheel & Trackpad: 滑鼠上下 是放大縮小, 滑鼠左右 是左右橫移
+    wrap.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (!currentCandles || currentCandles.length === 0) return;
+      const rect = wrap.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const plotW = cWidth - yAxisWidth;
+      if (mouseX < 0 || mouseX > plotW) return;
+
+      const isShift = e.shiftKey;
+      const absX = Math.abs(e.deltaX);
+      const absY = Math.abs(e.deltaY);
+
+      // 滑鼠左右 (deltaX / Shift+滾輪 / 觸控板左右滑動): 左右橫移
+      if (isShift || (absX > absY && absX > 0.5)) {
+        const rawDelta = isShift ? e.deltaY : e.deltaX;
+        const barWidth = plotW / visibleCount;
+        const barsToMove = Math.round(rawDelta / Math.max(10, barWidth * 0.75)) || (rawDelta > 0 ? 1 : -1);
+        offsetRight -= barsToMove;
+        clampViewport();
+        calculateScaleBounds();
+        draw();
+      } else if (absY > 0.5) {
+        // 滑鼠上下 (deltaY / 滾輪上下滾動): 放大縮小
+        const zoomIn = e.deltaY < 0;
+        const factor = zoomIn ? 0.84 : 1.19;
+        const newVisible = Math.max(15, Math.min(Math.min(500, currentCandles.length), Math.round(visibleCount * factor)));
+        if (newVisible !== visibleCount) {
+          // Keep candle under mouse cursor anchored
+          const ratioFromRight = (plotW - mouseX) / plotW;
+          const deltaBars = newVisible - visibleCount;
+          offsetRight = Math.round(offsetRight - deltaBars * ratioFromRight);
+
+          visibleCount = newVisible;
+          clampViewport();
+          calculateScaleBounds();
+          draw();
+        }
+      }
+    }, { passive: false });
+
+    // Double click to reset view
+    wrap.addEventListener('dblclick', () => {
+      visibleCount = Math.min(80, Math.max(25, currentCandles.length));
+      offsetRight = 8;
+      calculateScaleBounds();
+      resetCrosshairToLatest();
+      draw();
+    });
+
+    // Floating Zoom Controls Buttons
+    document.getElementById('btnZoomIn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      visibleCount = Math.max(15, Math.round(visibleCount * 0.8));
+      clampViewport();
+      calculateScaleBounds();
+      draw();
+    });
+
+    document.getElementById('btnZoomOut').addEventListener('click', (e) => {
+      e.stopPropagation();
+      visibleCount = Math.min(Math.min(500, currentCandles.length), Math.round(visibleCount * 1.25));
+      clampViewport();
+      calculateScaleBounds();
+      draw();
+    });
+
+    document.getElementById('btnResetView').addEventListener('click', (e) => {
+      e.stopPropagation();
+      visibleCount = Math.min(80, Math.max(25, currentCandles.length));
+      offsetRight = 8;
+      calculateScaleBounds();
+      resetCrosshairToLatest();
+      draw();
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // Timeframe Buttons Click Handler
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tf = btn.getAttribute('data-tf');
+        switchSymbol(currentSymbol, tf);
+      });
+    });
+
+    // Timeframe Dropdown Select Handler
+    document.getElementById('tfSelect').addEventListener('change', (e) => {
+      const tf = e.target.value;
+      switchSymbol(currentSymbol, tf);
+    });
+
+    // Countdown Badge [40] Animation (1s & 1m badges)
+    function tickCountdown() {
+      const now = new Date();
+      const s = now.getSeconds();
+      const remain1m = 60 - s;
+      document.getElementById('badge1m').textContent = remain1m;
+      document.getElementById('badge1s').textContent = String(s).padStart(2, '0');
+
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const sec = String(s).padStart(2, '0');
+      document.getElementById('systemClock').textContent = `${h}:${m}:${sec} UTC+8`;
+    }
+    setInterval(tickCountdown, 1000);
+    tickCountdown();
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadWatchlist();
+      if (currentSymbol) switchSymbol(currentSymbol, currentTimeframe);
+    });
+
+    // Fullscreen
+    document.getElementById('fsToggle').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+      } else {
+        document.exitFullscreen().catch(()=>{});
+      }
+    });
+
+    // Initial load
+    loadWatchlist();
+
+    // 10-Second Maintenance & Topology Modal Handlers
+    function openTopologyModal() {
+      renderTopologyModalTable();
+      document.getElementById('topoModalBackdrop').style.display = 'flex';
+    }
+
+    function closeTopologyModal() {
+      document.getElementById('topoModalBackdrop').style.display = 'none';
+    }
+
+    function renderTopologyModalTable() {
+      const tbody = document.getElementById('topoModalTbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      TOPO_CONFIG.forEach(item => {
+        const dec = symDecMap[item.symbol] !== undefined ? symDecMap[item.symbol] : 2;
+        const p = prevPrices[item.symbol];
+        const curPrice = p ? fmtNum(p, dec) : '-';
+        const isOnline = p && p > 0;
+        const statusBadge = isOnline 
+          ? `<span style="color:#059669; font-weight:700;">🟢 正常</span>` 
+          : `<span style="color:#dc2626; font-weight:700;">🔴 待檢測</span>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b style="color:#2563eb;">:${item.port}</b></td>
+          <td><b>${item.symbol}</b></td>
+          <td>${item.name}</td>
+          <td style="font-weight:700; font-family:Consolas, monospace;">${curPrice}</td>
+          <td style="font-size:11px; color:#64748b; font-family:Consolas, monospace;">D:\\ALL_PORTS_5001_5009\\${item.file}</td>
+          <td style="text-align:center;">${statusBadge}</td>
+          <td style="text-align:center;">
+            <button class="copy-btn" style="padding:2px 8px; margin:0;" onclick="switchSymbol('${item.symbol}'); closeTopologyModal();">切換</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.copyCmd = function(text, btn) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = '已複製!';
+          btn.style.background = '#059669';
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.style.background = '';
+          }, 1500);
+        }).catch(() => {
+          prompt('請手動複製以下指令:', text);
+        });
+      } else {
+        prompt('請手動複製以下指令:', text);
+      }
+    };
+
+    document.getElementById('btnOpenTopologyModal').addEventListener('click', openTopologyModal);
+    const noticeLink = document.getElementById('topNoticeSopLink');
+    if (noticeLink) noticeLink.addEventListener('click', openTopologyModal);
+    document.getElementById('btnCloseTopologyModal').addEventListener('click', closeTopologyModal);
+    document.getElementById('topoModalBackdrop').addEventListener('click', (e) => {
+      if (e.target.id === 'topoModalBackdrop') closeTopologyModal();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeTopologyModal();
+    });
+  </script>
+</body>
+</html>
