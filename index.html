@@ -1569,19 +1569,85 @@
       document.getElementById('detailBars').textContent = `${currentCandles.length} 根K線`;
     }
 
-    // Apply Live Tick to UI and Candlestick
+    function getTfSeconds(tf) {
+      if (!tf) return 60;
+      if (tf.endsWith('s')) return parseInt(tf) || 1;
+      if (tf.endsWith('m')) return (parseInt(tf) || 1) * 60;
+      if (tf.endsWith('h')) return (parseInt(tf) || 1) * 3600;
+      if (tf === '1d' || tf === 'd' || tf === 'daily') return 86400;
+      return 60;
+    }
+
+    function formatBarDate(d, tf) {
+      const Y = d.getFullYear();
+      const M = String(d.getMonth() + 1).padStart(2, '0');
+      const D = String(d.getDate()).padStart(2, '0');
+      const H = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      const s = String(d.getSeconds()).padStart(2, '0');
+      if (tf && tf.endsWith('s')) {
+        return `${H}:${m}:${s}`;
+      } else if (tf === '1d' || tf === 'd' || tf === 'daily') {
+        return `${Y}-${M}-${D}`;
+      } else {
+        return `${Y}-${M}-${D} ${H}:${m}`;
+      }
+    }
+
+    // Apply Live Tick to UI and Candlestick (隨時間自動長出新 K 線)
     function applyLiveTick(sym, tick) {
       if (!tick || !tick.price) return;
       const price = tick.price;
       const dec = symDecMap[sym] !== undefined ? symDecMap[sym] : 2;
 
-      // 1. If this is the active symbol, update chart's last candle
+      // 1. If this is the active symbol, update chart or grow new candle
       if (sym === currentSymbol) {
+        const nowSec = tick.time || Math.floor(Date.now() / 1000);
+        const tfSec = getTfSeconds(currentTimeframe);
+
         if (currentCandles && currentCandles.length > 0) {
-          const lastC = currentCandles[currentCandles.length - 1];
-          lastC.close = price;
-          if (price > lastC.high) lastC.high = price;
-          if (price < lastC.low) lastC.low = price;
+          let lastC = currentCandles[currentCandles.length - 1];
+          const curIntervalTs = Math.floor(nowSec / tfSec) * tfSec;
+
+          if (curIntervalTs > lastC.time) {
+            // 🌟 核心：自動長出新 K 線 (Auto-grow new K-lines) 🌟
+            // 若中間有歷史間隔（例如快照隔了數分鐘），自動補齊平滑過渡
+            while (lastC.time + tfSec < curIntervalTs && (curIntervalTs - lastC.time) <= tfSec * 60) {
+              const fillTs = lastC.time + tfSec;
+              const d = new Date(fillTs * 1000);
+              const dStr = formatBarDate(d, currentTimeframe);
+              currentCandles.push({
+                date: dStr,
+                time: fillTs,
+                open: lastC.close,
+                high: lastC.close,
+                low: lastC.close,
+                close: lastC.close,
+                volume: 1
+              });
+              lastC = currentCandles[currentCandles.length - 1];
+            }
+
+            // 新增當前最新時間區間的新 K 線
+            const d = new Date(curIntervalTs * 1000);
+            const dStr = formatBarDate(d, currentTimeframe);
+            currentCandles.push({
+              date: dStr,
+              time: curIntervalTs,
+              open: lastC.close,
+              high: Math.max(lastC.close, price),
+              low: Math.min(lastC.close, price),
+              close: price,
+              volume: 1
+            });
+            if (currentCandles.length > 1000) currentCandles.shift();
+          } else {
+            // 同一根 K 線內：即時更新收盤價、最高價、最低價
+            lastC.close = price;
+            if (price > lastC.high) lastC.high = price;
+            if (price < lastC.low) lastC.low = price;
+            lastC.volume = (lastC.volume || 0) + 1;
+          }
         }
         if (currentSummary) {
           currentSummary.last_close = price;
