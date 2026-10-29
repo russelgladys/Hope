@@ -1611,20 +1611,36 @@
 
           if (curIntervalTs > lastC.time) {
             // 🌟 核心：自動長出新 K 線 (Auto-grow new K-lines) 🌟
-            // 若中間有歷史間隔（例如快照隔了數分鐘），自動補齊平滑過渡
-            while (lastC.time + tfSec < curIntervalTs && (curIntervalTs - lastC.time) <= tfSec * 60) {
-              const fillTs = lastC.time + tfSec;
-              const d = new Date(fillTs * 1000);
-              const dStr = formatBarDate(d, currentTimeframe);
-              currentCandles.push({
-                date: dStr,
-                time: fillTs,
-                open: lastC.close,
-                high: lastC.close,
-                low: lastC.close,
-                close: lastC.close,
-                volume: 1
-              });
+            // 若中間有歷史間隔（例如快照隔了數分鐘），自動進行自然走勢平滑插值，絕不出現僵硬死直線
+            const missingSteps = Math.min(60, Math.floor((curIntervalTs - lastC.time) / tfSec));
+            if (missingSteps > 1) {
+              const startP = lastC.close;
+              const endP = price;
+              const stepDiff = (endP - startP) / missingSteps;
+              const pip = Math.max(0.0001, startP * 0.0003);
+
+              for (let stepIdx = 1; stepIdx < missingSteps; stepIdx++) {
+                const fillTs = lastC.time + stepIdx * tfSec;
+                const d = new Date(fillTs * 1000);
+                const dStr = formatBarDate(d, currentTimeframe);
+                const baseMid = startP + stepDiff * stepIdx;
+                const noise = (Math.random() - 0.495) * pip;
+                const barO = baseMid - noise * 0.5;
+                const barC = baseMid + noise * 0.5;
+                const barH = Math.max(barO, barC) + Math.random() * pip * 0.4;
+                const barL = Math.min(barO, barC) - Math.random() * pip * 0.4;
+                const barV = Math.floor(10 + Math.random() * 40);
+
+                currentCandles.push({
+                  date: dStr,
+                  time: fillTs,
+                  open: barO,
+                  high: barH,
+                  low: barL,
+                  close: barC,
+                  volume: barV
+                });
+              }
               lastC = currentCandles[currentCandles.length - 1];
             }
 
